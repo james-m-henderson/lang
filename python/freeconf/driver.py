@@ -14,12 +14,16 @@ import freeconf.fs
 import freeconf
 import weakref
 import platform
-import distutils.spawn
+import shutil
+from contextlib import contextmanager
 
 # for cleanup after exit.
 from concurrent import futures
 import signal
 import ctypes
+import logging
+
+logger = logging.getLogger(__name__)
 
 instance = None
 
@@ -93,7 +97,7 @@ def path_to_exe(verbose=False):
     
     if verbose:
         print("checking PATH")
-    full_path = distutils.spawn.find_executable(fname)
+    full_path = shutil.which(fname)
     if not full_path:
         raise ExecNotFoundException(f"{fname} was not found in PATH or any of the other documented locations")
 
@@ -135,7 +139,9 @@ class Driver():
             dbg = ['dlv', f'--listen={self.dbg_addr}', '--headless=true', '--api-version=2', 'exec']
             dbg.extend(cmd)
             cmd = dbg
-        self.g_proc = subprocess.Popen(cmd, preexec_fn=exit_with_parent)
+        # log cmd before running
+        logger.debug(f"{__name__}: {' '.join(cmd)}")
+        self.g_proc = run_and_terminate_process(cmd)
 
     def wait_for_g_connection(self, wait_forever):
         i = 0
@@ -214,9 +220,11 @@ class HandlePool:
 # Ensure fc-lang is terminated when this python process is terminated
 # see
 #  https://stackoverflow.com/questions/19447603/how-to-kill-a-python-child-process-created-with-subprocess-check-output-when-t/19448096#19448096
-#
-# does not work on windows, not sure about mac, need to implement different method.
-#
-libc = ctypes.CDLL("libc.so.6")
-def exit_with_parent():
-    return libc.prctl(1, signal.SIGTERM)
+@contextmanager
+def run_and_terminate_process(*args, **kwargs):
+    try:
+        p = subprocess.Popen(*args, **kwargs)
+        yield p        
+    finally:
+        p.terminate() # send sigterm, or ...
+        p.kill()      # send sigkill

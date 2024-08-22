@@ -1,18 +1,22 @@
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
-
-[project]
+[tool.poetry]
 name = "freeconf"
 version = "0.1.0"
-dependencies = [
-    "grpcio",
-    "google-api-python-client",
-	"setuptools"
-]
+description = ""
+authors = ["Douglas Hubler <douglas@hubler.us>"]
 
-[project.optional-dependencies]
-dev = ["grpcio_tools", "requests"]
+[tool.poetry.dependencies]
+python = "^3.8"
+grpcio = "^1.44.0"
+google-api-python-client = "^2.39.0"
+setuptools = "^73.0.1"
 
-[project.scripts]
+[tool.poetry.dev-dependencies]
+grpcio-tools = "^1.44.0"
+requests = "^2.27.1"
+
+[tool.poetry.scripts]
 fc-lang-install = "freeconf.install:run"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -26,7 +26,6 @@ deps-go:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.31.0
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
 
-
 # Just the popular ones.  You can easily build binary for missing platform
 PLATFORMS = \
   darwin-amd64 \
@@ -74,7 +73,7 @@ proto-py:
 	mkdir python/freeconf/pb
 	touch python/freeconf/pb/__init__.py
 	cd python; \
-		python3 -m grpc_tools.protoc \
+		poetry run python3 -m grpc_tools.protoc \
 			-I../proto \
 			--python_out=. \
 			--pyi_out=. \
@@ -96,18 +95,14 @@ test-py: test-py-py test-py-go
 
 test-py-py:
 	cd python/tests; \
-		$(foreach T,$(PY_TESTS),echo $(T) && python3 $(T) || exit;)
+		$(foreach T,$(PY_TESTS),echo $(T) && poetry run python3 $(T) || exit;)
 
 test-py-go:
 	FC_LANG=python go test -v ./test
 
 deps-py:
-	pip install build
-	cd python; \
-		pip install -e . && \
-		pip install -e ".[dev]"
+	poetry install
 
-dist-py :
-	! test -d python/freeconf.egg-info || rm -rf python/freeconf.egg-info
-	cd python; \
-		python3 -m build 
+dist-py:
+	poetry build
+
