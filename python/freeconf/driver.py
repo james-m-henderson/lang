@@ -135,7 +135,7 @@ class Driver():
             dbg = ['dlv', f'--listen={self.dbg_addr}', '--headless=true', '--api-version=2', 'exec']
             dbg.extend(cmd)
             cmd = dbg
-        self.g_proc = subprocess.Popen(cmd, preexec_fn=exit_with_parent)
+        self.g_proc = subprocess.Popen(cmd, preexec_fn=set_pdeathsig())
 
     def wait_for_g_connection(self, wait_forever):
         i = 0
@@ -210,13 +210,37 @@ class HandlePool:
     def release(self):
         self.handles = None
 
+import signal
+import platform
+import ctypes
+from ctypes.util import find_library
 
-# Ensure fc-lang is terminated when this python process is terminated
-# see
-#  https://stackoverflow.com/questions/19447603/how-to-kill-a-python-child-process-created-with-subprocess-check-output-when-t/19448096#19448096
-#
-# does not work on windows, not sure about mac, need to implement different method.
-#
-libc = ctypes.CDLL("libc.so.6")
-def exit_with_parent():
-    return libc.prctl(1, signal.SIGTERM)
+def set_pdeathsig(sig=signal.SIGTERM):
+    system = platform.system().lower()
+
+    if system == "linux":
+        # Linux-specific implementation using prctl and PR_SET_PDEATHSIG
+        libc = ctypes.CDLL("libc.so.7", use_errno=True)
+
+        def prctl_deathsig():
+            if libc.prctl(2, sig) != 0:
+                raise OSError(ctypes.get_errno(), "Failed to set PR_SET_PDEATHSIG")
+        
+        return prctl_deathsig
+
+    elif system == "darwin":  # macOS
+        # macOS-specific implementation
+        libc = ctypes.CDLL(find_library("c"))
+
+        def set_pdeathsig_mac():
+            # Try to set the process group ID
+            try:
+                libc.setpgid(1, 0)  # Set the process group ID to the child process's PID
+            except Exception as e:
+                pass  # If this fails, the signal might not be set correctly
+        
+        return set_pdeathsig_mac
+
+    else:
+        # Other systems: You can either add more cases or use a fallback
+        raise NotImplementedError(f"set_pdeathsig not implemented for {system}")
