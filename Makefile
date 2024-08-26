@@ -3,11 +3,8 @@ export YANGPATH = $(abspath test/yang)
 export PATH := $(PATH):$(abspath ./bin)
 export PYTHONPATH := $(abspath python)
 
-# Path to the virtual environment directory
-VENV_DIR := .venv
-
 # Python executable within the virtual environment
-PYTHON := $(abspath $(VENV_DIR))/bin/python3
+PYTHON := $(abspath venv/bin/python3)
 
 # Ensure virtual environment is set up before running any Python-related commands
 all : generate proto dist-go test dist-py
@@ -18,18 +15,17 @@ generate:
 		python/freeconf/*.in
 
 clean:
-	rm -rf $(VENV_DIR)
-	rm -f python/freeconf/*.in
-	rm -rf python/freeconf/pb/
+	rm -rf venv
+	rm -rf python/freeconf/pb
 	rm -f python/freeconf/*.pyc
-	rm -rf __pycache__/
+	rm -rf __pycache__
 	rm -f python/freeconf/meta.py
 	rm -f python/freeconf/unpack_meta.py
 	rm -f python/freeconf/meta_decoder.py
 	rm -f meta_encoder.go
- 	rm -rf python/freeconf/pb/
-	rm -rf python/dist/
-	rm -rf pb/
+	rm -rf python/dist
+	rm -rf pb
+	rm -rf bin
 
 
 .PHONY: test
@@ -43,11 +39,9 @@ proto: proto-go proto-py
 #################
 
 # Create the virtual environment if it doesn't exist
-venv: $(PYTHON)
-
-$(PYTHON):
-	python3 -m venv $(VENV_DIR)
-	@echo "Virtual environment created at $(VENV_DIR)."
+venv:
+	python3 -m venv venv
+	@echo "Virtual environment created at venv."
 
 #################
 ## G O
