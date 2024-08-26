@@ -4,7 +4,7 @@ export PATH := $(PATH):$(abspath ./bin)
 export PYTHONPATH := $(abspath python)
 
 # Python executable within the virtual environment
-PYTHON := $(abspath venv/bin/python3)
+PYTHON := $(abspath .venv/bin/python3)
 
 # Ensure virtual environment is set up before running any Python-related commands
 all : generate proto dist-go test dist-py
@@ -15,7 +15,7 @@ generate:
 		python/freeconf/*.in
 
 clean:
-	rm -rf venv
+	rm -rf .venv
 	rm -rf python/freeconf/pb
 	rm -f python/freeconf/*.pyc
 	rm -rf __pycache__
@@ -40,9 +40,9 @@ proto: proto-go proto-py
 #################
 
 # Create the virtual environment if it doesn't exist
-venv:
-	python3 -m venv venv
-	@echo "Virtual environment created at venv."
+.venv:
+	python3 -m .venv .venv
+	@echo "Virtual environment created at .venv."
 
 #################
 ## G O
@@ -96,7 +96,7 @@ proto-go:
 ## P Y T H O N
 #################
 
-proto-py: venv
+proto-py: .venv
 	! test -d python/freeconf/pb || rm -rf python/freeconf/pb
 	mkdir python/freeconf/pb
 	touch python/freeconf/pb/__init__.py
@@ -121,20 +121,20 @@ PY_TESTS = \
 
 test-py: test-py-py test-py-go
 
-test-py-py: venv
+test-py-py: .venv
 	cd python/tests; \
 		$(foreach T,$(PY_TESTS),echo $(T) && $(PYTHON) $(T) || exit;)
 
 test-py-go:
 	FC_LANG=python go test -v ./test
 
-deps-py: venv
+deps-py: .venv
 	$(PYTHON) -m pip install build
 	cd python; \
 		$(PYTHON) -m pip install -e . && \
 		$(PYTHON) -m pip install -e ".[dev]"
 
-dist-py : venv
+dist-py : .venv
 	! test -d python/freeconf.egg-info || rm -rf python/freeconf.egg-info
 	cd python; \
 		$(PYTHON) -m build
