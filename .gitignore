@@ -6,5 +6,7 @@ __pycache__/
 /meta_encoder.go
 /python/freeconf/pb/
 /python/venv/
+/venv
 /python/dist/
 /pb/
+/bin
