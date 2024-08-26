@@ -2,6 +2,19 @@
 
 Interface for binding other computer languages to the FreeCONF Go core
 
+## Dependencies
+
+- protoc
+- python3
+- golang > 1.20
+
+## Build and test
+
+```
+make deps-go deps-py
+make all
+```
+
 ## Debugging
 
 ```bash
@@ -11,7 +24,6 @@ FC_LANG_EXEC=fc-lang
 # Opens a port to listen for Go's Delve debugger on port 999
 FC_LANG_DBG_ADDR=:9999
 ```
-
 
 ## Setting up protoc
 
