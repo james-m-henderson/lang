@@ -3,6 +3,13 @@ export YANGPATH = $(abspath test/yang)
 export PATH := $(PATH):$(abspath ./bin)
 export PYTHONPATH := $(abspath python)
 
+# Path to the virtual environment directory
+VENV_DIR := .venv
+
+# Python executable within the virtual environment
+PYTHON := $(abspath $(VENV_DIR))/bin/python3
+
+# Ensure virtual environment is set up before running any Python-related commands
 all : generate proto dist-go test dist-py
 
 generate:
@@ -10,11 +17,37 @@ generate:
 		./*.in \
 		python/freeconf/*.in
 
+clean:
+	rm -rf $(VENV_DIR)
+	rm -f python/freeconf/*.in
+	rm -rf python/freeconf/pb/
+	rm -f python/freeconf/*.pyc
+	rm -rf __pycache__/
+	rm -f python/freeconf/meta.py
+	rm -f python/freeconf/unpack_meta.py
+	rm -f python/freeconf/meta_decoder.py
+	rm -f meta_encoder.go
+ 	rm -rf python/freeconf/pb/
+	rm -rf python/dist/
+	rm -rf pb/
+
+
 .PHONY: test
 test: test-go test-py
 
 .PHONY: dist
 proto: proto-go proto-py
+
+#################
+## VIRTUAL ENVIRONMENT
+#################
+
+# Create the virtual environment if it doesn't exist
+venv: $(PYTHON)
+
+$(PYTHON):
+	python3 -m venv $(VENV_DIR)
+	@echo "Virtual environment created at $(VENV_DIR)."
 
 #################
 ## G O
@@ -26,8 +59,7 @@ deps-go:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.31.0
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
 
-
-# Just the popular ones.  You can easily build binary for missing platform
+# Just the popular ones. You can easily build binary for missing platform
 PLATFORMS = \
   darwin-amd64 \
   darwin-arm64 \
@@ -69,19 +101,19 @@ proto-go:
 ## P Y T H O N
 #################
 
-proto-py:
+proto-py: venv
 	! test -d python/freeconf/pb || rm -rf python/freeconf/pb
 	mkdir python/freeconf/pb
 	touch python/freeconf/pb/__init__.py
 	cd python; \
-		python3 -m grpc_tools.protoc \
+		$(PYTHON) -m grpc_tools.protoc \
 			-I../proto \
 			--python_out=. \
 			--pyi_out=. \
 			--grpc_python_out=. \
 			../proto/freeconf/pb/*.proto
 
-# Loosely ordered by lower level to to higher level operations
+# Loosely ordered by lower level to higher level operations
 PY_TESTS = \
 	test_val.py \
 	test_driver.py \
@@ -94,20 +126,20 @@ PY_TESTS = \
 
 test-py: test-py-py test-py-go
 
-test-py-py:
+test-py-py: venv
 	cd python/tests; \
-		$(foreach T,$(PY_TESTS),echo $(T) && python3 $(T) || exit;)
+		$(foreach T,$(PY_TESTS),echo $(T) && $(PYTHON) $(T) || exit;)
 
 test-py-go:
 	FC_LANG=python go test -v ./test
 
-deps-py:
-	pip install build
+deps-py: venv
+	$(PYTHON) -m pip install build
 	cd python; \
-		pip install -e . && \
-		pip install -e ".[dev]"
+		$(PYTHON) -m pip install -e . && \
+		$(PYTHON) -m pip install -e ".[dev]"
 
-dist-py :
+dist-py : venv
 	! test -d python/freeconf.egg-info || rm -rf python/freeconf.egg-info
 	cd python; \
-		python3 -m build 
+		$(PYTHON) -m build
