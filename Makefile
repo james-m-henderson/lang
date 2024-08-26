@@ -41,7 +41,7 @@ proto: proto-go proto-py
 
 # Create the virtual environment if it doesn't exist
 .venv:
-	python3 -m .venv .venv
+	python3 -m venv .venv
 	@echo "Virtual environment created at .venv."
 
 #################
