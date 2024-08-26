@@ -126,7 +126,7 @@ test-py-py: .venv
 		$(foreach T,$(PY_TESTS),echo $(T) && $(PYTHON) $(T) || exit;)
 
 test-py-go:
-	FC_LANG=python go test -v ./test
+	. .venv/bin/activate && FC_LANG=python go test -v ./test
 
 deps-py: .venv
 	$(PYTHON) -m pip install build
