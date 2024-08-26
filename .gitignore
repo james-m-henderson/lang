@@ -10,3 +10,4 @@ __pycache__/
 /python/dist/
 /pb/
 /bin
+/python/freeconf.egg-info

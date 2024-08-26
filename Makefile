@@ -26,6 +26,7 @@ clean:
 	rm -rf python/dist
 	rm -rf pb
 	rm -rf bin
+	rm -rf python/freeconf.egg-info
 
 
 .PHONY: test
