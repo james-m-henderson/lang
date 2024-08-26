@@ -15,6 +15,10 @@ import freeconf
 import weakref
 import platform
 import distutils.spawn
+import signal
+import platform
+import ctypes
+from ctypes.util import find_library
 
 # for cleanup after exit.
 from concurrent import futures
@@ -210,11 +214,6 @@ class HandlePool:
     def release(self):
         self.handles = None
 
-import signal
-import platform
-import ctypes
-from ctypes.util import find_library
-
 def set_pdeathsig(sig=signal.SIGTERM):
     system = platform.system().lower()
 
@@ -223,7 +222,7 @@ def set_pdeathsig(sig=signal.SIGTERM):
         libc = ctypes.CDLL("libc.so.7", use_errno=True)
 
         def prctl_deathsig():
-            if libc.prctl(2, sig) != 0:
+            if libc.prctl(1, sig) != 0:
                 raise OSError(ctypes.get_errno(), "Failed to set PR_SET_PDEATHSIG")
         
         return prctl_deathsig
